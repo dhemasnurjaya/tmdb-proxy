@@ -1,0 +1,8 @@
+services:
+  server:
+    build:
+      context: .
+    container_name: tmdb_proxy_server
+    restart: unless-stopped
+    ports:
+      - 3001:8080
