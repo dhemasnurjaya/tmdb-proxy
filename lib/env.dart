@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs
 
+import 'dart:io';
+
 import 'package:envied/envied.dart';
 
 part 'env.g.dart';
@@ -18,8 +20,9 @@ class EnvImpl implements Env {
   static final String _authPrivateKey = _EnvImpl._authPrivateKey;
 
   @override
-  String get tmdbApiKey => _tmdbApiKey;
+  String get tmdbApiKey => Platform.environment['TMDB_API_KEY'] ?? _tmdbApiKey;
 
   @override
-  String get authPrivateKey => _authPrivateKey;
+  String get authPrivateKey =>
+      Platform.environment['AUTH_PRIVATE_KEY'] ?? _authPrivateKey;
 }
