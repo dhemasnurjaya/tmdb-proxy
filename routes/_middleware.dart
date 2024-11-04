@@ -25,11 +25,6 @@ Handler _cors(Handler handler) {
 }
 
 Handler _authCheck(Handler handler) {
-  const appliedRoutes = [
-    '/quotes',
-    '/images',
-  ];
-
   return handler.use(
     bearerAuthentication<bool>(
       authenticator: (context, token) async {
@@ -56,9 +51,6 @@ Handler _authCheck(Handler handler) {
         } on Exception catch (_) {
           return null;
         }
-      },
-      applies: (RequestContext context) async {
-        return appliedRoutes.any((e) => context.request.uri.path.startsWith(e));
       },
     ),
   );
