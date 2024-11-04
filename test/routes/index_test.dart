@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
+import 'package:tmdb_proxy/data/request_body.dart';
 import 'package:tmdb_proxy/env.dart';
 import 'package:tmdb_proxy/error/error_response.dart';
 import 'package:tmdb_proxy/network/network.dart';
@@ -28,7 +30,7 @@ void main() {
     registerFallbackValue(Uri.parse('http://test.com/'));
   });
 
-  test('should return 405 when request method is not GET', () async {
+  test('should return 405 when request method is not POST', () async {
     // arrange
     final tExpectedResponse = Response.json(
       statusCode: HttpStatus.methodNotAllowed,
@@ -39,7 +41,7 @@ void main() {
     );
     when(() => mockContext.request).thenReturn(
       Request(
-        'POST',
+        'GET',
         Uri.parse('http://test.com/'),
       ),
     );
@@ -69,8 +71,10 @@ void main() {
     when(() => mockContext.read<Network>()).thenReturn(mockNetwork);
     when(() => mockContext.request).thenReturn(
       Request(
-        'GET',
-        Uri.http('test.com', '/', {'path': 'error'}),
+        'POST',
+        Uri.http('test.com', '/'),
+        body:
+            jsonEncode(const RequestBody(path: '/test', queries: {}).toJson()),
       ),
     );
     when(() => mockEnv.tmdbApiKey).thenReturn('api_key');
@@ -87,7 +91,7 @@ void main() {
     expect(tBody, tExpectedBody);
   });
 
-  test('should return 200 when request method is GET', () async {
+  test('should return 200 when request method is POST', () async {
     // arrange
     final tExpectedResponse = Response.json(
       body: {'message': 'Hi!'},
@@ -96,8 +100,9 @@ void main() {
     when(() => mockContext.read<Network>()).thenReturn(MockNetwork());
     when(() => mockContext.request).thenReturn(
       Request(
-        'GET',
+        'POST',
         Uri.parse('http://test.com/'),
+        body: jsonEncode(const RequestBody(path: '', queries: {}).toJson()),
       ),
     );
 

@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
+import 'package:tmdb_proxy/data/request_body.dart';
 import 'package:tmdb_proxy/env.dart';
 import 'package:tmdb_proxy/error/error_response.dart';
 import 'package:tmdb_proxy/network/network.dart';
@@ -10,43 +12,48 @@ const _baseUrl = 'https://api.themoviedb.org/3';
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
 
-  if (request.method == HttpMethod.get) {
+  if (request.method == HttpMethod.post) {
     final env = context.read<Env>();
     final network = context.read<Network>();
 
-    final path = request.uri.queryParameters['path'];
-    final query = request.uri.queryParameters['query'];
+    final requestBody = RequestBody.fromJson(
+      jsonDecode(await request.body()) as Map<String, dynamic>,
+    );
     final requestUrl = StringBuffer(_baseUrl);
 
-    if (path == null) {
+    if (requestBody.path.isEmpty) {
       return Response.json(
         body: {'message': 'Hi!'},
       );
     }
 
     // Append the path to the base URL
-    if (path.startsWith('/')) {
-      requestUrl.write(path);
+    if (requestBody.path.startsWith('/')) {
+      requestUrl.write(requestBody.path);
     } else {
-      requestUrl.write('/$path');
+      requestUrl.write('/${requestBody.path}');
     }
 
     // Append the API key to the URL
     requestUrl.write('?api_key=${env.tmdbApiKey}');
 
     // Add any query parameters to the URL
-    if (query != null) {
-      requestUrl.write('&$query');
+    if (requestBody.queries.isNotEmpty) {
+      final queries =
+          requestBody.queries.entries.map((e) => '${e.key}=${e.value}');
+      requestUrl.write('&${queries.join('&')}');
     }
 
-    final uri = Uri.parse(requestUrl.toString());
-
     try {
+      final uri = Uri.parse(requestUrl.toString());
       final result = await network.get(uri);
-      final headers = Map.of(result.headers)..remove('transfer-encoding');
-      return Response(
+      final body = jsonDecode(result.body) as Map<String, dynamic>;
+      final headers = Map.of(result.headers)
+        ..remove('transfer-encoding')
+        ..remove('content-encoding');
+      return Response.json(
         statusCode: result.statusCode,
-        body: result.body,
+        body: body,
         headers: headers,
       );
     } on Exception catch (e) {

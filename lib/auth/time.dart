@@ -1,3 +1,5 @@
+// ignore_for_file: one_member_abstracts
+
 /// Humble class for time related operations.
 abstract class Time {
   /// Get unix timestamp in seconds.
